@@ -1,0 +1,119 @@
+Simbolo,Nombre,NumeroAtomico,MasaAtomica,Electronegatividad,Estado,TipoElemento
+H,Hidrógeno,1,1.008,2.20,Gas,No Metal
+He,Helio,2,4.0026,,Gas,Gas Noble
+Li,Litio,3,6.94,0.98,Sólido,Metal Alcalino
+Be,Berilio,4,9.0122,1.57,Sólido,Metal Alcalinotérreo
+B,Boro,5,10.81,2.04,Sólido,Metaloide
+C,Carbono,6,12.011,2.55,Sólido,No Metal
+N,Nitrógeno,7,14.007,3.04,Gas,No Metal
+O,Oxígeno,8,15.999,3.44,Gas,No Metal
+F,Flúor,9,18.998,3.98,Gas,No Metal
+Ne,Neón,10,20.18,,Gas,Gas Noble
+Na,Sodio,11,22.99,0.93,Sólido,Metal Alcalino
+Mg,Magnesio,12,24.305,1.31,Sólido,Metal Alcalinotérreo
+Al,Aluminio,13,26.982,1.61,Sólido,Metal del Bloque p
+Si,Silicio,14,28.085,1.90,Sólido,Metaloide
+P,Fósforo,15,30.974,2.19,Sólido,No Metal
+S,Azufre,16,32.06,2.58,Sólido,No Metal
+Cl,Cloro,17,35.45,3.16,Gas,No Metal
+Ar,Argón,18,39.948,,Gas,Gas Noble
+K,Potasio,19,39.098,0.82,Sólido,Metal Alcalino
+Ca,Calcio,20,40.078,1.00,Sólido,Metal Alcalinotérreo
+Sc,Escandio,21,44.955,1.36,Sólido,Metal de Transición
+Ti,Titanio,22,47.867,1.54,Sólido,Metal de Transición
+V,Vanadio,23,50.942,1.63,Sólido,Metal de Transición
+Cr,Cromo,24,51.996,1.66,Sólido,Metal de Transición
+Mn,Manganeso,25,54.938,1.55,Sólido,Metal de Transición
+Fe,Hierro,26,55.845,1.83,Sólido,Metal de Transición
+Co,Cobalto,27,58.933,1.88,Sólido,Metal de Transición
+Ni,Níquel,28,58.693,1.91,Sólido,Metal de Transición
+Cu,Cobre,29,63.546,1.90,Sólido,Metal de Transición
+Zn,Zinc,30,65.38,1.65,Sólido,Metal de Transición
+Ga,Galio,31,69.723,1.81,Sólido,Metal del Bloque p
+Ge,Germanio,32,72.63,2.01,Sólido,Metaloide
+As,Arsénico,33,74.922,2.18,Sólido,Metaloide
+Se,Selenio,34,78.971,2.55,Sólido,No Metal
+Br,Bromo,35,79.904,2.96,Líquido,No Metal
+Kr,Kriptón,36,83.798,,Gas,Gas Noble
+Rb,Rubidio,37,85.468,0.82,Sólido,Metal Alcalino
+Sr,Estroncio,38,87.62,0.95,Sólido,Metal Alcalinotérreo
+Y,Itrio,39,88.906,1.22,Sólido,Metal de Transición
+Zr,Circonio,40,91.224,1.33,Sólido,Metal de Transición
+Nb,Niobio,41,92.906,1.6,Sólido,Metal de Transición
+Mo,Molibdeno,42,95.95,2.16,Sólido,Metal de Transición
+Tc,Tecnecio,43,98,,Sólido,Metal de Transición
+Ru,Rutenio,44,101.07,2.2,Sólido,Metal de Transición
+Rh,Rodio,45,102.91,2.28,Sólido,Metal de Transición
+Pd,Paladio,46,106.42,2.20,Sólido,Metal de Transición
+Ag,Plata,47,107.87,1.93,Sólido,Metal de Transición
+Cd,Cadmio,48,112.41,1.69,Sólido,Metal de Transición
+In,Indio,49,114.82,1.78,Sólido,Metal del Bloque p
+Sn,Estaño,50,118.71,1.96,Sólido,Metal del Bloque p
+Sb,Antimonio,51,121.76,2.05,Sólido,Metaloide
+Te,Telurio,52,127.60,2.1,Sólido,Metaloide
+I,Yodo,53,126.90,2.66,Sólido,No Metal
+Xe,Xenón,54,131.29,,Gas,Gas Noble
+Cs,Cesio,55,132.91,0.79,Sólido,Metal Alcalino
+Ba,Bario,56,137.33,0.89,Sólido,Metal Alcalinotérreo
+La,Lantano,57,138.91,1.10,Sólido,Lantánido
+Ce,Cerio,58,140.12,1.12,Sólido,Lantánido
+Pr,Praseodimio,59,140.91,1.13,Sólido,Lantánido
+Nd,Neodimio,60,144.24,1.14,Sólido,Lantánido
+Pm,Prometio,61,145,,Sólido,Lantánido
+Sm,Samario,62,150.36,1.17,Sólido,Lantánido
+Eu,Europio,63,151.96,1.20,Sólido,Lantánido
+Gd,Gadolinio,64,157.25,1.20,Sólido,Lantánido
+Tb,Terbio,65,158.93,1.20,Sólido,Lantánido
+Dy,Disprosio,66,162.50,1.22,Sólido,Lantánido
+Ho,Holmio,67,164.93,1.23,Sólido,Lantánido
+Er,Erbio,68,167.26,1.24,Sólido,Lantánido
+Tm,Tulio,69,168.93,1.25,Sólido,Lantánido
+Yb,Yterbio,70,173.05,1.10,Sólido,Lantánido
+Lu,Lutecio,71,174.97,1.27,Sólido,Lantánido
+Hf,Hafnio,72,178.49,1.3,Sólido,Metal de Transición
+Ta,Tantalio,73,180.95,1.5,Sólido,Metal de Transición
+W,Wolframio,74,183.84,2.36,Sólido,Metal de Transición
+Re,Rhenio,75,186.21,1.9,Sólido,Metal de Transición
+Os,Osmio,76,190.23,2.2,Sólido,Metal de Transición
+Ir,Iridio,77,192.22,2.20,Sólido,Metal de Transición
+Pt,Platino,78,195.08,2.28,Sólido,Metal de Transición
+Au,Oro,79,196.97,2.54,Sólido,Metal de Transición
+Hg,Mercurio,80,200.59,2.00,Líquido,Metal de Transición
+Tl,Talio,81,204.38,1.62,Sólido,Metal del Bloque p
+Pb,Plomo,82,207.2,2.33,Sólido,Metal del Bloque p
+Bi,Bismuto,83,208.98,2.02,Sólido,Metal del Bloque p
+Po,Polonio,84,209,2.0,Sólido,Metaloide
+At,Astato,85,210,2.2,Sólido,No Metal
+Rn,Radón,86,222,,Gas,Gas Noble
+Fr,Francio,87,223,0.7,Sólido,Metal Alcalino
+Ra,Radio,88,226,0.9,Sólido,Metal Alcalinotérreo
+Ac,Actinio,89,227,1.1,Sólido,Actínido
+Th,Torio,90,232.04,1.3,Sólido,Actínido
+Pa,Protactinio,91,231.04,1.5,Sólido,Actínido
+U,Uranio,92,238.03,1.38,Sólido,Actínido
+Np,Neptunio,93,237,1.36,Sólido,Actínido
+Pu,Plutonio,94,244,1.28,Sólido,Actínido
+Am,Americio,95,243,1.3,Sólido,Actínido
+Cm,Curio,96,247,1.3,Sólido,Actínido
+Bk,Berkelio,97,247,1.3,Sólido,Actínido
+Cf,Californio,98,251,1.3,Sólido,Actínido
+Es,Einstenio,99,252,1.3,Sólido,Actínido
+Fm,Fermio,100,257,1.3,Sólido,Actínido
+Md,Mendelevio,101,258,1.3,Sólido,Actínido
+No,Nobelio,102,259,1.3,Sólido,Actínido
+Lr,Lawrencio,103,262,1.3,Sólido,Actínido
+Rf,Rutherfordio,104,267,,Sólido,Metal de Transición
+Db,Dubnio,105,270,,Sólido,Metal de Transición
+Sg,Seaborgio,106,271,,Sólido,Metal de Transición
+Bh,Bohrium,107,270,,Sólido,Metal de Transición
+Hs,Hassio,108,277,,Sólido,Metal de Transición
+Mt,Meitnerio,109,278,,Sólido,Metal de Transición
+Ds,Darmstadtio,110,281,,Sólido,Metal de Transición
+Rg,Roentgenio,111,282,,Sólido,Metal de Transición
+Cn,Copernicio,112,285,,Sólido,Metal de Transición
+Nh,Nihonio,113,286,,Sólido,Metal del Bloque p
+Fl,Flerovio,114,289,,Sólido,Metal del Bloque p
+Mc,Moscovio,115,290,,Sólido,Metal del Bloque p
+Lv,Livermorio,116,293,,Sólido,Metal del Bloque p
+Ts,Tenesino,117,294,,Sólido,No Metal
+Og,Oganesón,118,294,,Gas,Gas Noble
