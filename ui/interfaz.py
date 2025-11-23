@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext, messagebox
 import pandas as pd
+import customtkinter as ctk
 import re # Necesario para buscar números al inicio de la cadena
 
 # Importaciones absolutas.
@@ -52,12 +53,37 @@ class Interfaz(tk.Tk):
         self.tabla_periodica = TablaPeriodica(self.frame_top, self.mostrar_info_elemento)
         self.tabla_periodica.grid(row=0, column=1, sticky="nsew", padx=6, pady=6) 
 
-        # --- Frame de Entrada de Ecuación (Fila 1) ---
-        self.frame_input = tk.Frame(self, bg='#B0BEC5', padx=10, pady=10)
-        self.frame_input.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        # --- Frame de Entrada de Ecuación (Fila 1) CustomTKinter---
+        self.frame_input = ctk.CTkFrame(
+            master=self,
+            fg_color='#B0BEC5',    # Reemplaza a 'bg'. Es el color de fondo del frame.
+            corner_radius=20,      # <--- ¡LA MAGIA! Bordes redondeados.
+            border_width=2,        # Opcional: un borde de línea.
+            border_color="#78909C" # Opcional: color del borde un poco más oscuro.
+            )
+
+# La colocación (grid) funciona casi igual, pero se ve mejor
+        self.frame_input.grid(
+            row=1, 
+            column=0, 
+            sticky="ew", # "ew" hace que se estire de Este a Oeste (ancho completo)
+            padx=20,     # Margen externo (separación de los bordes de la ventana)
+            pady=10      # Margen vertical
+            )
+
+# Esto se mantiene igual (es para centrar o expandir elementos dentro)
         self.frame_input.grid_columnconfigure(0, weight=1)
         
-        tk.Label(self.frame_input, text="Ecuación Química", font=('Helvetica', 14, 'bold'), bg='#B0BEC5').grid(row=0, column=0, columnspan=10, pady=5)
+        lbl_EcuacionQ=ctk.CTkLabel(
+            master=self.frame_input,
+            corner_radius=20,
+            text="Ecuación Química",
+            text_color="#000000",
+            font=("Roboto Bold",30)
+        )
+        lbl_EcuacionQ.grid(row=0, column=0, columnspan=10, pady=5)
+
+# Recuerden gente, todo eso de arriba solo con Custom TKinter --Sgt.Aldea---
 
         # Campo de entrada de la ecuación
         self.ecuacion_var = tk.StringVar(value="") 
@@ -77,12 +103,76 @@ class Interfaz(tk.Tk):
         # --- AÑADIR RASTREO (TRACE) AL CAMPO DE LA MOLÉCULA ---
         self.molecula_var.trace_add('write', self.convertir_a_subindices)
         
-        # --- BOTONES DE OPERACIÓN ---
-        tk.Button(self.frame_constructor, text="Agregar (+)", bg="#4CAF50", fg="white", font=('Helvetica', 10, 'bold'), command=self.agregar_molecula).pack(side=tk.LEFT, padx=5)
-        tk.Button(self.frame_constructor, text="Flecha (→)", bg="#FFC107", fg="black", font=('Helvetica', 10, 'bold'), command=self.agregar_flecha).pack(side=tk.LEFT, padx=5)
-        tk.Button(self.frame_constructor, text="Limpiar", bg="#F44336", fg="white", font=('Helvetica', 10, 'bold'), command=self.limpiar_ecuacion).pack(side=tk.LEFT, padx=5)
-        tk.Button(self.frame_constructor, text="BALANCEAR", bg="#2196F3", fg="white", font=('Helvetica', 10, 'bold'), command=self.balancear_ecuacion).pack(side=tk.LEFT, padx=10)
-        tk.Button(self.frame_constructor, text="Mostrar Lewis", bg="#9C27B0", fg="white", command=self.mostrar_lewis_actual).pack(side=tk.LEFT, padx=5)
+        # --- BOTONES DE OPERACIÓN | Los cambie de Tkinter a CustomTkinter --Sgt.Aldea---
+        btn_agregar = ctk.CTkButton(
+            master=self.frame_constructor,
+            text="Agregar (+)",
+            fg_color="#1E88E5",
+            hover_color="#1565C0",
+            border_width=2,
+            border_color="#1F7DCF",
+            corner_radius=20,
+            font=("Roboto bold", 14),
+            text_color="#000000",
+            command=self.agregar_molecula
+        )
+        btn_agregar.pack(side=ctk.LEFT, padx=5 ,pady=10)
+
+        btn_flecha = ctk.CTkButton(
+            master=self.frame_constructor,
+            text="Flecha(→)",
+            fg_color="#FFC107",
+            hover_color="#C09000",
+            border_width=2,
+            border_color="#ECB306",
+            corner_radius=20,
+            font=("Roboto Bold", 14),
+            text_color="#000000",
+            command=self.agregar_flecha
+        )
+        btn_flecha.pack(side=ctk.LEFT, padx=5 ,pady=10)
+
+        btn_limpiar = ctk.CTkButton(
+            master=self.frame_constructor,
+            text="Limpiar",
+            fg_color="#E34234",
+            hover_color="#BE3A2E",
+            border_width=2,
+            border_color="#C73325",
+            corner_radius=20,
+            font=("Roboto Bold", 14),
+            text_color="#000000",
+            command=self.limpiar_ecuacion
+        )
+        btn_limpiar.pack(side=ctk.LEFT, padx=5 ,pady=10)
+        
+        btn_balancear = ctk.CTkButton(
+            master=self.frame_constructor,
+            text="Balancear",
+            fg_color="#00A86B",
+            hover_color="#027E50",
+            border_width=2,
+            border_color="#11885C",
+            corner_radius=20,
+            font=("Roboto Bold", 14),
+            text_color="#000000",
+            command=self.balancear_ecuacion
+        )
+        btn_balancear.pack(side=ctk.LEFT, padx=5 ,pady=10)
+
+        btn_lewis = ctk.CTkButton(
+            master=self.frame_constructor,
+            text="Estructura de Lewis",
+            fg_color="#9C27B0",
+            hover_color="#751E85",
+            border_width=2,
+            border_color="#8C329C",
+            corner_radius=20,
+            font=("Roboto Bold", 14),
+            text_color="#000000",
+            command=self.mostrar_lewis_actual
+        )
+        btn_lewis.pack(side=ctk.LEFT, padx=5 ,pady=10)
 
         # --- Frame de Resultado (Fila 2) ---
         self.frame_bottom = tk.Frame(self, bg='#ECEFF1', padx=10, pady=10)

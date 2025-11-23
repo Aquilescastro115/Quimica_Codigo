@@ -9,19 +9,18 @@ from functools import reduce
 # =============================================================================
 
 COLORES_GRUPOS = {
-    "No Metal": "#81C784",
-    "Gas Noble": "#64B5F6",
-    "Metal Alcalino": "#E57373",
-    "Metal Alcalinotérreo": "#F06292",
-    "Metaloide": "#BA68C8",
-    "Metal de Transición": "#FFD54F",
-    "Lantánido": "#FF8A65",
-    "Actínido": "#A1887F",
-    "Metal del Bloque p": "#90A4AE",
-    "Halógeno": "#4DB6AC", # Cl, F, Br, I, At, Ts
-    "Desconocido": "#E0E0E0"
+    "Metal Alcalino": "#EF5350",       # Rojo suave
+    "Metal Alcalinotérreo": "#FFA726", # Naranja
+    "Metal de Transición": "#FFEE58",     # Amarillo
+    "Lantánido": "#AB47BC",      # Violeta
+    "Actínido": "#EC407A",       # Rosa
+    "Metal del Bloque p": "#9CCC65",          # Verde Lima
+    "Metaloide": "#26A69A",      # Verde Azulado
+    "No Metal": "#42A5F5",       # Azul Claro
+    "Halógeno": "#29B6F6",       # Cian
+    "Gas Noble": "#5C6BC0",      # Índigo
+    "Desconocido": "#CFD8DC"     # Gris
 }
-
 # La tabla de POSICIONES es clave para el grid layout.
 # Las coordenadas son (fila, columna)
 # FIX: Se corrigieron las filas de los elementos de los Períodos 2 (B-Ne) y 3 (Al-Ar)

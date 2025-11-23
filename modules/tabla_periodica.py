@@ -1,89 +1,103 @@
-import tkinter as tk
+
+import customtkinter as ctk
 from modules.utils import cargar_elementos, COLORES_GRUPOS, POSICIONES
 
-class TablaPeriodica(tk.Frame):
+class TablaPeriodica(ctk.CTkFrame):
     """
-    Representa la Tabla Periódica como una cuadrícula de botones para la interfaz.
+    Versión Modernizada de la Tabla Periódica usando CustomTkinter.
     """
     def __init__(self, master, elemento_callback=None):
-        super().__init__(master, bg='#ECEFF1', padx=10, pady=10) # Fondo claro
+        # fg_color="transparent" hace que se mezcle con el fondo de la ventana principal
+        super().__init__(master, fg_color="transparent") 
         
         self.elementos_df = cargar_elementos()
-        self.elemento_callback = elemento_callback # Función a llamar al presionar un botón
+        self.elemento_callback = elemento_callback
         
         self.crear_widgets()
         
     def crear_widgets(self):
-        """Crea y coloca los botones de los elementos en la cuadrícula."""
-        
-        # 1. Configurar la expansión del grid (CRUCIAL para que los elementos se vean)
-        # Aseguramos que las columnas y filas tengan peso para expandirse
-        num_cols = 18 # 18 columnas estándar de la tabla
-        num_rows = 10 # 7 filas + 3 de espacio/lantánidos/actínidos
+        # 1. Configurar la expansión del grid
+        num_cols = 18 
+        num_rows = 10 
 
+        # Configuración de columnas
         for i in range(num_cols):
-            self.grid_columnconfigure(i, weight=1, minsize=50) 
+            self.grid_columnconfigure(i, weight=1, minsize=0) # Un poco más ancho para estética
+            
+        # Configuración de filas
         for i in range(num_rows):
-            # Las filas de separación (7) y las de los elementos (8 y 9) necesitan peso
-            if i in [7, 8, 9]:
-                 self.grid_rowconfigure(i, weight=1, minsize=50)
+            if i in [7, 8, 9]: # Filas de separación y tierras raras
+                 self.grid_rowconfigure(i, weight=1, minsize=0)
             else:
-                 self.grid_rowconfigure(i, weight=1, minsize=45)
+                 self.grid_rowconfigure(i, weight=1, minsize=0)
 
         # 2. Crear y colocar botones
         for index, row in self.elementos_df.iterrows():
             simbolo = row['Simbolo']
             
-            # Asegura que el símbolo esté en la lista de posiciones
             if simbolo in POSICIONES:
                 fila, columna = POSICIONES[simbolo]
                 
-                # Obtener el color basado en el tipo de elemento
                 tipo_elemento = row['TipoElemento']
-                color_fondo = COLORES_GRUPOS.get(tipo_elemento, "#E0E0E0")
+                color_fondo = COLORES_GRUPOS.get(tipo_elemento, "#CFD8DC")
                 
-                # Crear el texto del botón: Símbolo grande y número atómico pequeño
+                # Lógica de Contraste: Texto blanco para fondos oscuros, negro para claros
+                color_texto = "white" if tipo_elemento in ["Gas Noble", "Lantanido", "Actinido", "Alcalino"] else "#1A1A1A"
+                
+                # Texto del botón
                 texto_boton = f"{row['NumeroAtomico']}\n{simbolo}"
                 
-                # Crear el botón
-                btn = tk.Button(self,
+                # --- EL CAMBIO VISUAL PRINCIPAL ---
+                btn = ctk.CTkButton(
+                    master=self,
                     text=texto_boton,
-                    bg=color_fondo,
-                    fg="#000000",
-                    activebackground=color_fondo,
-                    activeforeground="#000000",
-                    relief=tk.RAISED,
-                    borderwidth=1,
-                    highlightthickness=1,
-                    wraplength=50,
-                    font=('Helvetica', 10, 'bold'),
+                    fg_color=color_fondo,        # Color del grupo
+                    text_color=color_texto,      # Color de letra dinámico
+                    font=("Roboto", 12, "bold"), # Fuente más limpia
+                    
+                    # Estilo Moderno
+                    corner_radius=6,             # Bordes sutilmente redondeados (No muy redondos para grid)
+                    border_width=0,              # Sin bordes negros duros
+                    hover_color="#546E7A",       # Color al pasar el mouse (Gris azulado)
+                    
+                    # Callbacks
                     command=lambda s=simbolo: self.manejar_click_elemento(s)
                 )
                 
-                # Colocar el botón usando las coordenadas de POSICIONES
-                # sticky="nsew" es crucial: hace que el widget llene la celda del grid
-                btn.grid(row=fila, column=columna, sticky="nsew", padx=1, pady=1)
+                # padx=2, pady=2 crea el espacio blanco entre las celdas
+                btn.grid(row=fila, column=columna, sticky="nsew", padx=2, pady=2)
 
-                # Si el elemento es La, Act, o el espacio de transición, añadir etiquetas
+                # Etiquetas especiales (La, Ac) dentro de la tabla principal
                 if simbolo == "La":
-                    self.crear_etiqueta_rango(row=fila, column=0, text="57-71", color="#FF8A65")
+                    self.crear_etiqueta_rango(fila, 0, "57-71", "#AB47BC") # Color Lantanido
                 elif simbolo == "Ac":
-                    self.crear_etiqueta_rango(row=fila, column=0, text="89-103", color="#A1887F")
+                    self.crear_etiqueta_rango(fila, 0, "89-103", "#EC407A") # Color Actinido
                 
-        # 3. Etiquetas de Lanthanoides/Actinoides en el cuerpo principal
-        # Etiqueta que indica dónde van los Lantánidos
-        tk.Label(self, text="57-71", bg='#EFEFEF', fg="#FF8A65", font=('Helvetica', 9, 'bold')).grid(row=5, column=2, sticky="nsew", padx=1, pady=1)
-        # Etiqueta que indica dónde van los Actínidos
-        tk.Label(self, text="89-103", bg='#EFEFEF', fg="#A1887F", font=('Helvetica', 9, 'bold')).grid(row=6, column=2, sticky="nsew", padx=1, pady=1)
+        # 3. Etiquetas de referencia en el cuerpo (Donde irían La y Ac)
+        # Usamos CTkLabel con corner_radius para que parezcan "huecos" vacíos
+        lbl_la = ctk.CTkLabel(self, text="57-71", fg_color="#E0E0E0", text_color="gray", corner_radius=6)
+        lbl_la.grid(row=5, column=2, sticky="nsew", padx=2, pady=2)
+        
+        lbl_ac = ctk.CTkLabel(self, text="89-103", fg_color="#E0E0E0", text_color="gray", corner_radius=6)
+        lbl_ac.grid(row=6, column=2, sticky="nsew", padx=2, pady=2)
 
     def crear_etiqueta_rango(self, row, column, text, color):
-        """Crea etiquetas para los bloques de Lantánidos y Actínidos en el pie de página."""
-        tk.Label(self, text=text, bg=color, fg="#FFFFFF", font=('Helvetica', 8, 'bold')).grid(row=row, column=column, sticky="nsew", padx=1, pady=1, columnspan=2)
-
+        """Etiquetas laterales pequeñas"""
+        # Hacemos que coincidan con el estilo de los botones pero sin ser clickeables
+        lbl = ctk.CTkLabel(
+            master=self, 
+            text=text, 
+            fg_color=color, 
+            text_color="white", 
+            font=("Arial", 10, "bold"),
+            corner_radius=6
+        )
+        lbl.grid(row=row, column=column, sticky="nsew", padx=2, pady=2, columnspan=2)
 
     def manejar_click_elemento(self, simbolo):
-        """Maneja el evento de click en un botón de elemento."""
+        """Maneja el evento de click (Igual que antes)"""
         if self.elemento_callback:
+            # Filtramos el dataframe (asegúrate que devuelve un Series o Dict válido)
             elemento_info = self.elementos_df[self.elementos_df['Simbolo'] == simbolo].iloc[0]
             self.elemento_callback(elemento_info)
 
