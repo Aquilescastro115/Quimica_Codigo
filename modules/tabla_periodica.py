@@ -53,10 +53,12 @@ class TablaPeriodica(ctk.CTkFrame):
                     text=texto_boton,
                     fg_color=color_fondo,        # Color del grupo
                     text_color=color_texto,      # Color de letra dinámico
-                    font=("Roboto", 12, "bold"), # Fuente más limpia
+                    font=("Arial", 9, "bold"), # Fuente más limpia
                     
                     # Estilo Moderno
-                    corner_radius=6,             # Bordes sutilmente redondeados (No muy redondos para grid)
+                    corner_radius=2,
+                    width=32,
+                    height=28,             # Bordes sutilmente redondeados (No muy redondos para grid)
                     border_width=0,              # Sin bordes negros duros
                     hover_color="#546E7A",       # Color al pasar el mouse (Gris azulado)
                     
@@ -65,7 +67,7 @@ class TablaPeriodica(ctk.CTkFrame):
                 )
                 
                 # padx=2, pady=2 crea el espacio blanco entre las celdas
-                btn.grid(row=fila, column=columna, sticky="nsew", padx=2, pady=2)
+                btn.grid(row=fila, column=columna, sticky="nsew", padx=1, pady=1)
 
                 # Etiquetas especiales (La, Ac) dentro de la tabla principal
                 if simbolo == "La":
@@ -75,11 +77,13 @@ class TablaPeriodica(ctk.CTkFrame):
                 
         # 3. Etiquetas de referencia en el cuerpo (Donde irían La y Ac)
         # Usamos CTkLabel con corner_radius para que parezcan "huecos" vacíos
-        lbl_la = ctk.CTkLabel(self, text="57-71", fg_color="#E0E0E0", text_color="gray", corner_radius=6)
-        lbl_la.grid(row=5, column=2, sticky="nsew", padx=2, pady=2)
+        lbl_la = ctk.CTkLabel(self, text="57-71", fg_color="#E0E0E0", text_color="gray", corner_radius=2)
+        lbl_la.configure(font=("Arial", 9, "bold"))
+        lbl_la.grid(row=5, column=2, sticky="nsew", padx=1, pady=1)
         
-        lbl_ac = ctk.CTkLabel(self, text="89-103", fg_color="#E0E0E0", text_color="gray", corner_radius=6)
-        lbl_ac.grid(row=6, column=2, sticky="nsew", padx=2, pady=2)
+        lbl_ac = ctk.CTkLabel(self, text="89-103", fg_color="#E0E0E0", text_color="gray", corner_radius=2)
+        lbl_ac.configure(font=("Arial", 9, "bold"))
+        lbl_ac.grid(row=6, column=2, sticky="nsew", padx=1, pady=1)
 
     def crear_etiqueta_rango(self, row, column, text, color):
         """Etiquetas laterales pequeñas"""

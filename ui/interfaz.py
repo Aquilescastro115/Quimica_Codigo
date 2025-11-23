@@ -15,7 +15,8 @@ class Interfaz(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Balanceador de Ecuaciones Químicas (por Mínimos Cuadrados)")
-        self.geometry("1000x800")
+        self.geometry("1100x800")
+        self.state('zoomed')
         
         # Cargar datos para el tooltip
         self.df_elementos = cargar_elementos()
@@ -27,18 +28,23 @@ class Interfaz(tk.Tk):
         
         # Configuración principal del grid (reorganizada para evitar solapamientos)
         # Filas: 0 = tabla periódica (grande), 1 = entrada (fija), 2 = resultado, 3 = lewis (grande al final)
-        self.grid_rowconfigure(0, weight=3, minsize=260)
-        self.grid_rowconfigure(1, weight=0, minsize=80)
-        self.grid_rowconfigure(2, weight=1, minsize=160)
-        self.grid_rowconfigure(3, weight=2, minsize=260)
+        self.grid_rowconfigure(0, weight=0, minsize=210)
+        self.grid_rowconfigure(1, weight=0, minsize=160)
+        self.grid_rowconfigure(2, weight=1, minsize=300)
         self.grid_columnconfigure(0, weight=1)
 
         # --- Frame Principal de la Tabla (Fila 0) ---
         self.frame_top = tk.Frame(self, bg='#CFD8DC')
-        self.frame_top.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.frame_top.grid(row=0, column=0, sticky="nsew", padx=5, pady=(5,1))
+
+        self.frame_middle = tk.Frame(self) # Frame invisible contenedor
+        self.frame_middle.grid(row=1, column=0, sticky="nsew", padx=5, pady=1)
+        self.frame_middle.grid_columnconfigure(0, weight=3) 
+        self.frame_middle.grid_columnconfigure(1, weight=2)
+        self.frame_middle.grid_rowconfigure(0, weight=1)
         
         # Dentro de frame_top la columna 0 es el panel de info y la 1 la tabla (expandible)
-        self.frame_top.grid_columnconfigure(0, weight=0, minsize=220) # panel información ancho fijo
+        self.frame_top.grid_columnconfigure(0, weight=0, minsize=160) # panel información ancho fijo
         self.frame_top.grid_columnconfigure(1, weight=1) # tabla ocupa el resto
         self.frame_top.grid_rowconfigure(0, weight=1) 
         
@@ -55,20 +61,18 @@ class Interfaz(tk.Tk):
 
         # --- Frame de Entrada de Ecuación (Fila 1) CustomTKinter---
         self.frame_input = ctk.CTkFrame(
-            master=self,
+            master=self.frame_middle,
             fg_color='#B0BEC5',    # Reemplaza a 'bg'. Es el color de fondo del frame.
-            corner_radius=20,      # <--- ¡LA MAGIA! Bordes redondeados.
-            border_width=2,        # Opcional: un borde de línea.
-            border_color="#78909C" # Opcional: color del borde un poco más oscuro.
+            corner_radius=20,      # <--- ¡LA MAGIA! Bordes redondeados. # Opcional: color del borde un poco más oscuro.
             )
 
 # La colocación (grid) funciona casi igual, pero se ve mejor
         self.frame_input.grid(
-            row=1, 
+            row=0, 
             column=0, 
-            sticky="ew", # "ew" hace que se estire de Este a Oeste (ancho completo)
-            padx=20,     # Margen externo (separación de los bordes de la ventana)
-            pady=10      # Margen vertical
+            sticky="nsew", # "ew" hace que se estire de Este a Oeste (ancho completo)
+            padx=(0, 5),     # Margen externo (separación de los bordes de la ventana)
+            pady=0      # Margen vertical
             )
 
 # Esto se mantiene igual (es para centrar o expandir elementos dentro)
@@ -79,129 +83,102 @@ class Interfaz(tk.Tk):
             corner_radius=20,
             text="Ecuación Química",
             text_color="#000000",
-            font=("Roboto Bold",30)
+            font=("Roboto Bold",24)
         )
-        lbl_EcuacionQ.grid(row=0, column=0, columnspan=10, pady=5)
+        lbl_EcuacionQ.grid(row=0, column=0, columnspan=10, pady=2)
 
 # Recuerden gente, todo eso de arriba solo con Custom TKinter --Sgt.Aldea---
 
         # Campo de entrada de la ecuación
         self.ecuacion_var = tk.StringVar(value="") 
-        self.entry_ecuacion = tk.Entry(self.frame_input, textvariable=self.ecuacion_var, font=('Helvetica', 12), width=50, bd=2, relief=tk.SUNKEN)
+        self.entry_ecuacion = tk.Entry(self.frame_input, textvariable=self.ecuacion_var, font=('Helvetica', 12), width=35, bd=2, relief=tk.SUNKEN)
         self.entry_ecuacion.grid(row=1, column=0, columnspan=10, padx=5, pady=5, sticky="ew")
         
         # Frame para el constructor de la ecuación
         self.frame_constructor = tk.Frame(self.frame_input, bg='#B0BEC5')
-        self.frame_constructor.grid(row=2, column=0, columnspan=10, pady=5)
+        self.frame_constructor.grid(row=2, column=0, columnspan=10, pady=5, sticky="ew")
+        self.frame_constructor.grid_columnconfigure((0,1,2,3,4), weight=1)
         
-        tk.Label(self.frame_constructor, text="Molécula:", font=('Helvetica', 11), bg='#B0BEC5').pack(side=tk.LEFT, padx=(0, 5))
-        
+        lbl_mol = tk.Label(self.frame_constructor, text="Molécula:", font=('Helvetica', 11), bg='#B0BEC5')
+        lbl_mol.grid(row=0, column=0, padx=5, pady=5, sticky="e")
         self.molecula_var = tk.StringVar(value="") 
-        self.entry_molecula = tk.Entry(self.frame_constructor, textvariable=self.molecula_var, font=('Helvetica', 11), width=15, bd=1)
-        self.entry_molecula.pack(side=tk.LEFT, padx=5)
+        self.molecula_var.trace_add('write', self.convertir_a_subindices)
+        self.entry_molecula = tk.Entry(self.frame_constructor, textvariable=self.molecula_var, font=('Helvetica', 11), width=12, bd=1)
+        self.entry_molecula.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
         # --- AÑADIR RASTREO (TRACE) AL CAMPO DE LA MOLÉCULA ---
         self.molecula_var.trace_add('write', self.convertir_a_subindices)
         
         # --- BOTONES DE OPERACIÓN | Los cambie de Tkinter a CustomTkinter --Sgt.Aldea---
         btn_agregar = ctk.CTkButton(
-            master=self.frame_constructor,
-            text="Agregar (+)",
-            fg_color="#1E88E5",
-            hover_color="#1565C0",
-            border_width=2,
-            border_color="#1F7DCF",
-            corner_radius=20,
-            font=("Roboto bold", 14),
-            text_color="#000000",
+            master=self.frame_constructor, text="Agregar (+)",
+            fg_color="#1E88E5", hover_color="#1565C0",
+            corner_radius=15, height=30, width=100, # Un poco más compactos
             command=self.agregar_molecula
         )
-        btn_agregar.pack(side=ctk.LEFT, padx=5 ,pady=10)
+        btn_agregar.grid(row=0, column=2, padx=5, pady=5)
 
         btn_flecha = ctk.CTkButton(
-            master=self.frame_constructor,
-            text="Flecha(→)",
-            fg_color="#FFC107",
-            hover_color="#C09000",
-            border_width=2,
-            border_color="#ECB306",
-            corner_radius=20,
-            font=("Roboto Bold", 14),
-            text_color="#000000",
+            master=self.frame_constructor, text="Flecha (→)",
+            fg_color="#FFC107", hover_color="#C09000",
+            corner_radius=15, height=30, width=100,
             command=self.agregar_flecha
         )
-        btn_flecha.pack(side=ctk.LEFT, padx=5 ,pady=10)
+        btn_flecha.grid(row=0, column=3, padx=5, pady=5)
 
         btn_limpiar = ctk.CTkButton(
-            master=self.frame_constructor,
-            text="Limpiar",
-            fg_color="#E34234",
-            hover_color="#BE3A2E",
-            border_width=2,
-            border_color="#C73325",
-            corner_radius=20,
-            font=("Roboto Bold", 14),
-            text_color="#000000",
+            master=self.frame_constructor, text="Limpiar",
+            fg_color="#E34234", hover_color="#BE3A2E",
+            corner_radius=15, height=32, width=110,
             command=self.limpiar_ecuacion
         )
-        btn_limpiar.pack(side=ctk.LEFT, padx=5 ,pady=10)
+        btn_limpiar.grid(row=1, column=1, padx=5, pady=(2,5))
         
         btn_balancear = ctk.CTkButton(
-            master=self.frame_constructor,
-            text="Balancear",
-            fg_color="#00A86B",
-            hover_color="#027E50",
-            border_width=2,
-            border_color="#11885C",
-            corner_radius=20,
-            font=("Roboto Bold", 14),
-            text_color="#000000",
+            master=self.frame_constructor, text="Balancear",
+            fg_color="#00A86B", hover_color="#027E50",
+            corner_radius=15, height=32, width=110, font=("Roboto", 13, "bold"),
             command=self.balancear_ecuacion
         )
-        btn_balancear.pack(side=ctk.LEFT, padx=5 ,pady=10)
-
+        btn_balancear.grid(row=1, column=2, padx=5, pady=(2,5))
         btn_lewis = ctk.CTkButton(
-            master=self.frame_constructor,
-            text="Estructura de Lewis",
-            fg_color="#9C27B0",
-            hover_color="#751E85",
-            border_width=2,
-            border_color="#8C329C",
-            corner_radius=20,
-            font=("Roboto Bold", 14),
-            text_color="#000000",
+            master=self.frame_constructor, text="Ver Lewis", # Texto más corto
+            fg_color="#9C27B0", hover_color="#751E85",
+            corner_radius=15, height=32, width=110,
             command=self.mostrar_lewis_actual
         )
-        btn_lewis.pack(side=ctk.LEFT, padx=5 ,pady=10)
+        btn_lewis.grid(row=1, column=3, padx=5, pady=(2,5))
 
         # --- Frame de Resultado (Fila 2) ---
-        self.frame_bottom = tk.Frame(self, bg='#ECEFF1', padx=10, pady=10)
-        self.frame_bottom.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
+        self.frame_bottom = tk.Frame(self.frame_middle, bg='#ECEFF1', padx=10, pady=10)
+        self.frame_bottom.grid(row=0, column=1, sticky="nsew", padx=(5, 0), pady=0)
         self.frame_bottom.grid_columnconfigure(0, weight=1)
         self.frame_bottom.grid_rowconfigure(1, weight=1)
 
         tk.Label(self.frame_bottom, text="Procedimiento y Resultado", font=('Helvetica', 14, 'bold'), bg='#ECEFF1').grid(row=0, column=0, sticky="w", pady=(0, 5))
         
-        self.output_text = scrolledtext.ScrolledText(self.frame_bottom, wrap=tk.WORD, height=10, font=('Consolas', 11), bd=2, relief=tk.SUNKEN)
+        self.output_text = scrolledtext.ScrolledText(self.frame_bottom, wrap=tk.WORD, height=6, font=('Consolas', 11), bd=2, relief=tk.SUNKEN)
         self.output_text.grid(row=1, column=0, sticky="nsew")
 
         # --- NUEVO FRAME PARA ESTRUCTURA DE LEWIS (Fila 3, al final) ---
-        self.frame_lewis = tk.Frame(self, bg='#DDE3E8', padx=10, pady=10)
-        self.frame_lewis.grid(row=3, column=0, sticky="nsew", padx=5, pady=5)
+        self.frame_lewis = tk.Frame(self, bg='#DDE3E8', padx=5, pady=5)
+        self.frame_lewis.grid(row=2, column=0, sticky="nsew", padx=5, pady=(1,5))
 
         # Configuración de columnas y filas internas (más espacio para 3D)
         self.frame_lewis.grid_columnconfigure(0, weight=1)
         self.frame_lewis.grid_columnconfigure(1, weight=2)
-        self.frame_lewis.grid_rowconfigure(0, weight=1)
+        self.frame_lewis.grid_rowconfigure(0, weight=0, minsize=30) 
+        # Fila 1: Contenido (peso 1 = ocupa todo el resto del espacio)
+        self.frame_lewis.grid_rowconfigure(1, weight=1)
 
         # --- Título del panel de Lewis ---
         self.label_lewis_title = tk.Label(
             self.frame_lewis,
             text="Estructura de Lewis (2D) y Modelo (3D)",
-            font=('Helvetica', 14, 'bold'),
+            font=('Helvetica', 12, 'bold'),
             bg='#DDE3E8'
         )
-        self.label_lewis_title.grid(row=0, column=0, columnspan=2, pady=5)
+        self.label_lewis_title.grid(row=0, column=0, columnspan=2, pady=(2,5), sticky="n")
 
         # --- Canvas 2D de Lewis (expandible) ---
         self.canvas_2d = tk.Canvas(
@@ -210,11 +187,11 @@ class Interfaz(tk.Tk):
             highlightthickness=1,
             highlightbackground="#AAAAAA"
         )
-        self.canvas_2d.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        self.canvas_2d.grid(row=1, column=0, sticky="nsew", padx=5, pady=0)
 
         # --- Frame donde irá el modelo 3D (VTK) ---
         self.frame_3d = tk.Frame(self.frame_lewis, bg="black")
-        self.frame_3d.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
+        self.frame_3d.grid(row=1, column=1, sticky="nsew", padx=2, pady=0)
 
     # --- Generador simple de geometría a partir de fórmula (heurístico) ---
     def formula_a_atoms_bonds(self, formula_norm):
