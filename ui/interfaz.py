@@ -56,7 +56,7 @@ class Interfaz(tk.Tk):
         self.frame_info.grid(row=0, column=0, sticky="nsw", padx=10, pady=10)
 
         # --- Tabla Periódica --- (Columna 1)
-        self.tabla_periodica = TablaPeriodica(self.frame_top, self.mostrar_info_elemento)
+        self.tabla_periodica = TablaPeriodica(self.frame_top, click_callback=self.evento_click_elemento, hover_callback=self.actualizar_panel_info)
         self.tabla_periodica.grid(row=0, column=1, sticky="nsew", padx=6, pady=6) 
 
         # --- Frame de Entrada de Ecuación (Fila 1) CustomTKinter---
@@ -432,14 +432,13 @@ class Interfaz(tk.Tk):
             self.molecula_var.trace_add('write', self.convertir_a_subindices)
         
     
-    def mostrar_info_elemento(self, elemento_info: pd.Series):
+    def actualizar_panel_info(self, elemento_info):
         """
         Actualiza el tooltip con la información detallada del elemento
         Y añade el SÍMBOLO al campo de la molécula, manteniendo la lógica de subíndices.
         """
         simbolo = elemento_info['Simbolo']
-        
-        # Actualiza el panel de información (sin cambios)
+    
         nombre = elemento_info['Nombre']
         numero_atomico = elemento_info['NumeroAtomico']
         masa_atomica = elemento_info['MasaAtomica']
@@ -452,20 +451,20 @@ class Interfaz(tk.Tk):
         )
         self.frame_info.config(text=info)
 
-        # LÓGICA: Añadir símbolo al campo de la molécula
+    def evento_click_elemento(self, elemento_info):
+
+        # 1. Actualizamos info
+        self.actualizar_panel_info(elemento_info)
+
+        # 2. Escribimos en el input
+        simbolo = elemento_info['Simbolo']
         current_molecula = self.molecula_var.get()
-        
-        # 1. Revertir subíndices a normales para trabajar (ej. '2H₂O' -> '2H2O')
         current_molecula_normal = current_molecula.translate(SUB_TO_NORMAL)
-        
-        # 2. Agregar el nuevo símbolo
         new_normal = current_molecula_normal + simbolo
         
-        # 3. Usar la lógica de conversión (que ya maneja coeficientes y subíndices)
-        # Esto es lo más simple, ya que el rastreo maneja la compleja lógica de separación
-        # Si cambiamos la variable, el trace se activa y lo corrige.
+        # Usamos la lógica de conversión
         self.molecula_var.set(new_normal.translate(NORMAL_TO_SUB))
-        self.entry_molecula.focus_set() # Poner el foco en el campo de la molécula
+        self.entry_molecula.focus_set()
 
 
     def agregar_molecula(self):
