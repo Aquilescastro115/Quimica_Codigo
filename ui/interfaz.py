@@ -10,6 +10,7 @@ from modules.parser import parsear_ecuacion
 from modules.balanceo import BalanceadorEcuacion
 # Asumo que estas constantes y función existen en modules/utils.py
 from modules.utils import NORMAL_TO_SUB, cargar_elementos, SUB_TO_NORMAL 
+from ui.novedades import VentanaNovedades #el nuevo changelog gente
 
 class Interfaz(tk.Tk):
     def __init__(self):
@@ -17,6 +18,8 @@ class Interfaz(tk.Tk):
         self.title("Balanceador de Ecuaciones Químicas (por Mínimos Cuadrados)")
         self.geometry("1100x800")
         self.state('zoomed')
+
+        self.after(600, lambda: VentanaNovedades(self))
         
         # Cargar datos para el tooltip
         self.df_elementos = cargar_elementos()
@@ -47,13 +50,46 @@ class Interfaz(tk.Tk):
         self.frame_top.grid_columnconfigure(0, weight=0, minsize=160) # panel información ancho fijo
         self.frame_top.grid_columnconfigure(1, weight=1) # tabla ocupa el resto
         self.frame_top.grid_rowconfigure(0, weight=1) 
+             
+        # --- TARJETA DE INFORMACIÓN (Estilo Notificación) usando CTkFrame ---
         
-        # Tooltip para info de elemento (Columna 0)
-        self.frame_info = tk.Label(self.frame_top, text="Clic en un elemento\npara ver detalles.", 
-                                 bg='#EFEFEF', bd=1, relief=tk.SOLID, justify=tk.LEFT,
-                                 font=('Helvetica', 10), anchor='nw', width=28, height=8, 
-                                 padx=8, pady=8)
-        self.frame_info.grid(row=0, column=0, sticky="nsw", padx=10, pady=10)
+        # 1. El Contenedor (La "Tarjeta" en sí)
+        self.frame_info = ctk.CTkFrame(
+            self.frame_top,
+            fg_color="#ECEFF1",       
+            corner_radius=15,         
+            border_width=2,           
+            border_color="#CFD8DC",   
+            width=220                
+        )
+        # Importante: pack_propagate(False) evita que el frame se encoja al tamaño del texto
+        self.frame_info.pack_propagate(False) 
+        self.frame_info.grid(row=0, column=0, sticky="nsew", padx=(5, 10), pady=5)
+
+        self.lbl_simbolo_grande = ctk.CTkLabel(
+            self.frame_info,
+            text="?",                 
+            font=("Roboto", 40, "bold"),
+            text_color="#455A64"
+        )
+        self.lbl_simbolo_grande.pack(pady=(20, 5)) 
+
+        self.lbl_nombre_elemento = ctk.CTkLabel(
+            self.frame_info,
+            text="Selecciona un elemento",
+            font=("Roboto", 16, "bold"),
+            text_color="#37474F"
+        )
+        self.lbl_nombre_elemento.pack(pady=(0, 10))
+
+        self.lbl_detalles = ctk.CTkLabel(
+            self.frame_info,
+            text="Masa: --\nN° Atómico: --\nFamilia: --",
+            font=("Roboto", 12),
+            text_color="#546E7A",
+            justify="center" 
+        )
+        self.lbl_detalles.pack(pady=5)
 
         # --- Tabla Periódica --- (Columna 1)
         self.tabla_periodica = TablaPeriodica(self.frame_top, click_callback=self.evento_click_elemento, hover_callback=self.actualizar_panel_info)
@@ -62,8 +98,8 @@ class Interfaz(tk.Tk):
         # --- Frame de Entrada de Ecuación (Fila 1) CustomTKinter---
         self.frame_input = ctk.CTkFrame(
             master=self.frame_middle,
-            fg_color='#B0BEC5',    # Reemplaza a 'bg'. Es el color de fondo del frame.
-            corner_radius=20,      # <--- ¡LA MAGIA! Bordes redondeados. # Opcional: color del borde un poco más oscuro.
+            fg_color='#B0BEC5',    
+            corner_radius=20,      
             )
 
 # La colocación (grid) funciona casi igual, pero se ve mejor
@@ -431,25 +467,26 @@ class Interfaz(tk.Tk):
         if trace_id:
             self.molecula_var.trace_add('write', self.convertir_a_subindices)
         
-    
-    def actualizar_panel_info(self, elemento_info):
-        """
-        Actualiza el tooltip con la información detallada del elemento
-        Y añade el SÍMBOLO al campo de la molécula, manteniendo la lógica de subíndices.
-        """
-        simbolo = elemento_info['Simbolo']
-    
-        nombre = elemento_info['Nombre']
-        numero_atomico = elemento_info['NumeroAtomico']
-        masa_atomica = elemento_info['MasaAtomica']
-        tipo = elemento_info['TipoElemento']
+    def actualizar_panel_info(self, info_elemento):
+        """Actualiza la tarjeta con estilo visual."""
         
-        info = (
-            f"{nombre} ({simbolo})\n"
-            f"Z: {numero_atomico} | Masa: {masa_atomica}\n"
-            f"Tipo: {tipo}"
+        simbolo = info_elemento['Simbolo']
+        nombre = str(info_elemento.get('Nombre', 'Elemento')).title() 
+        numero = info_elemento['NumeroAtomico']
+        masa = info_elemento['MasaAtomica']
+        tipo = info_elemento['TipoElemento']
+        self.lbl_simbolo_grande.configure(text=simbolo)
+        from modules.utils import COLORES_GRUPOS
+        color_familia = COLORES_GRUPOS.get(tipo, "#455A64")
+        self.lbl_simbolo_grande.configure(text_color=color_familia)
+        self.lbl_nombre_elemento.configure(text=nombre)
+        texto_detalles = (
+            f"N° Atómico: {numero}\n"
+            f"Masa: {masa}\n"
+            f"{tipo}"
         )
-        self.frame_info.config(text=info)
+        self.lbl_detalles.configure(text=texto_detalles)
+
 
     def evento_click_elemento(self, elemento_info):
 
