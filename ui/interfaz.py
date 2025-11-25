@@ -24,6 +24,7 @@ class Interfaz(tk.Tk):
         super().__init__()
         self.title("Balanceador de Ecuaciones Químicas (por Mínimos Cuadrados)")
         self.geometry("1100x800")
+        self.config(bg='#ECEFF1')
         try:
             self.state('zoomed')
         except Exception:
@@ -50,7 +51,7 @@ class Interfaz(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
 
         # --- Frame Principal de la Tabla (Fila 0) ---
-        self.frame_top = tk.Frame(self, bg='#CFD8DC')
+        self.frame_top = tk.Frame(self, bg='#ECEFF1')  # Frame invisible contenedor
         self.frame_top.grid(row=0, column=0, sticky="nsew", padx=5, pady=(5, 0))
 
         self.frame_middle = tk.Frame(self)  # Frame invisible contenedor
@@ -224,12 +225,12 @@ class Interfaz(tk.Tk):
                      bg='#ECEFF1').grid(row=0, column=0, sticky="w", pady=(0, 5))
 
         self.output_text = scrolledtext.ScrolledText(self.frame_bottom, wrap=tk.WORD, height=6,
-                                                     font=('Consolas', 11), bd=0, relief=tk.FLAT, bg="#ECEFF1",
-                                                     padx=10, pady=10)
+                                                     font=('Consolas', 11), bd=2, relief=tk.SUNKEN, bg="white", padx=10, pady=10)
+
         self.output_text.grid(row=1, column=0, sticky="nsew", padx=15, pady=(0, 15))
 
         # --- Frame para Lewis (Fila final) ---
-        self.frame_lewis = tk.Frame(self, bg='#DDE3E8', padx=5, pady=5)
+        self.frame_lewis = tk.Frame(self, bg='#ECEFF1', padx=5, pady=5)
         self.frame_lewis.grid(row=2, column=0, sticky="nsew", padx=5, pady=(0, 5))
 
         self.frame_lewis.grid_columnconfigure(0, weight=1)
@@ -238,7 +239,7 @@ class Interfaz(tk.Tk):
         self.frame_lewis.grid_rowconfigure(1, weight=1)
 
         self.label_lewis_title = tk.Label(self.frame_lewis, text="Estructura de Lewis (2D) y Modelo (3D)",
-                                          font=('Helvetica', 14, 'bold'), bg='#DDE3E8')
+                                          font=('Helvetica', 14, 'bold'), bg='#ECEFF1')
         self.label_lewis_title.grid(row=0, column=0, columnspan=2, pady=(2, 5), sticky="n")
 
         self.canvas_2d = tk.Canvas(self.frame_lewis, bg="white", highlightthickness=1, highlightbackground="#AAAAAA")
