@@ -30,15 +30,15 @@ class Interfaz(tk.Tk):
         # Filas: 0 = tabla periódica (grande), 1 = entrada (fija), 2 = resultado, 3 = lewis (grande al final)
         self.grid_rowconfigure(0, weight=0, minsize=210)
         self.grid_rowconfigure(1, weight=0, minsize=160)
-        self.grid_rowconfigure(2, weight=1, minsize=300)
+        self.grid_rowconfigure(2, weight=1, minsize=230)
         self.grid_columnconfigure(0, weight=1)
 
         # --- Frame Principal de la Tabla (Fila 0) ---
         self.frame_top = tk.Frame(self, bg='#CFD8DC')
-        self.frame_top.grid(row=0, column=0, sticky="nsew", padx=5, pady=(5,1))
+        self.frame_top.grid(row=0, column=0, sticky="nsew", padx=5, pady=(5,0))
 
         self.frame_middle = tk.Frame(self) # Frame invisible contenedor
-        self.frame_middle.grid(row=1, column=0, sticky="nsew", padx=5, pady=1)
+        self.frame_middle.grid(row=1, column=0, sticky="nsew", padx=5, pady=0)
         self.frame_middle.grid_columnconfigure(0, weight=3) 
         self.frame_middle.grid_columnconfigure(1, weight=2)
         self.frame_middle.grid_rowconfigure(0, weight=1)
@@ -57,7 +57,7 @@ class Interfaz(tk.Tk):
 
         # --- Tabla Periódica --- (Columna 1)
         self.tabla_periodica = TablaPeriodica(self.frame_top, click_callback=self.evento_click_elemento, hover_callback=self.actualizar_panel_info)
-        self.tabla_periodica.grid(row=0, column=1, sticky="nsew", padx=6, pady=6) 
+        self.tabla_periodica.grid(row=0, column=1, sticky="nsew", padx=4, pady=4) 
 
         # --- Frame de Entrada de Ecuación (Fila 1) CustomTKinter---
         self.frame_input = ctk.CTkFrame(
@@ -83,7 +83,7 @@ class Interfaz(tk.Tk):
             corner_radius=20,
             text="Ecuación Química",
             text_color="#000000",
-            font=("Roboto Bold",24)
+            font=("Helvetica", 18, 'bold')
         )
         lbl_EcuacionQ.grid(row=0, column=0, columnspan=10, pady=2)
 
@@ -150,19 +150,28 @@ class Interfaz(tk.Tk):
         btn_lewis.grid(row=1, column=3, padx=5, pady=(2,5))
 
         # --- Frame de Resultado (Fila 2) ---
-        self.frame_bottom = tk.Frame(self.frame_middle, bg='#ECEFF1', padx=10, pady=10)
+        self.frame_bottom = ctk.CTkFrame(
+            master=self.frame_middle,
+            fg_color='#B0BEC5',  # Mismo color que el de la izquierda
+            corner_radius=20  # Mismos bordes redondeados
+        )
         self.frame_bottom.grid(row=0, column=1, sticky="nsew", padx=(5, 0), pady=0)
         self.frame_bottom.grid_columnconfigure(0, weight=1)
         self.frame_bottom.grid_rowconfigure(1, weight=1)
-
-        tk.Label(self.frame_bottom, text="Procedimiento y Resultado", font=('Helvetica', 14, 'bold'), bg='#ECEFF1').grid(row=0, column=0, sticky="w", pady=(0, 5))
+        lbl_resultados = ctk.CTkLabel(
+            master=self.frame_bottom,
+            text="Procedimiento y Resultado",
+            text_color="#000000",
+            font=("Helvetica", 18, 'bold') # Fuente grande y negrita
+        )
+        lbl_resultados.grid(row=0, column=0, sticky="ew", pady=(10, 5))
         
-        self.output_text = scrolledtext.ScrolledText(self.frame_bottom, wrap=tk.WORD, height=6, font=('Consolas', 11), bd=2, relief=tk.SUNKEN)
-        self.output_text.grid(row=1, column=0, sticky="nsew")
+        self.output_text = scrolledtext.ScrolledText(self.frame_bottom, wrap=tk.WORD, height=6, font=('Consolas', 11), bd=0, relief=tk.FLAT, bg="#ECEFF1", padx=10, pady=10)
+        self.output_text.grid(row=1, column=0, sticky="nsew", padx=15, pady=(0, 15))
 
         # --- NUEVO FRAME PARA ESTRUCTURA DE LEWIS (Fila 3, al final) ---
         self.frame_lewis = tk.Frame(self, bg='#DDE3E8', padx=5, pady=5)
-        self.frame_lewis.grid(row=2, column=0, sticky="nsew", padx=5, pady=(1,5))
+        self.frame_lewis.grid(row=2, column=0, sticky="nsew", padx=5, pady=(0,5))
 
         # Configuración de columnas y filas internas (más espacio para 3D)
         self.frame_lewis.grid_columnconfigure(0, weight=1)
@@ -175,7 +184,7 @@ class Interfaz(tk.Tk):
         self.label_lewis_title = tk.Label(
             self.frame_lewis,
             text="Estructura de Lewis (2D) y Modelo (3D)",
-            font=('Helvetica', 12, 'bold'),
+            font=('Helvetica', 14, 'bold'),
             bg='#DDE3E8'
         )
         self.label_lewis_title.grid(row=0, column=0, columnspan=2, pady=(2,5), sticky="n")
