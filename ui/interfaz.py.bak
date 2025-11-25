@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext, messagebox
 import pandas as pd
+import customtkinter as ctk
 import re # Necesario para buscar números al inicio de la cadena
 
 # Importaciones absolutas.
@@ -14,7 +15,8 @@ class Interfaz(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Balanceador de Ecuaciones Químicas (por Mínimos Cuadrados)")
-        self.geometry("1000x800")
+        self.geometry("1100x800")
+        self.state('zoomed')
         
         # Cargar datos para el tooltip
         self.df_elementos = cargar_elementos()
@@ -24,113 +26,170 @@ class Interfaz(tk.Tk):
     def crear_layout(self):
         """Configura el layout principal usando grid."""
         
-        # Configuración principal del grid
-        # Filas: 0 = tabla periódica, 1 = lewis, 2 = entrada, 3 = resultado
-        self.grid_rowconfigure(0, weight=1) # Fila superior (Tabla)
-        self.grid_rowconfigure(1, weight=1) # Fila Lewis (nuevo)
-        self.grid_rowconfigure(2, weight=0) # Fila media (Entrada)
-        self.grid_rowconfigure(3, weight=1) # Fila inferior (Resultado)
-        self.grid_columnconfigure(0, weight=1) # Columna única
+        # Configuración principal del grid (reorganizada para evitar solapamientos)
+        # Filas: 0 = tabla periódica (grande), 1 = entrada (fija), 2 = resultado, 3 = lewis (grande al final)
+        self.grid_rowconfigure(0, weight=0, minsize=210)
+        self.grid_rowconfigure(1, weight=0, minsize=160)
+        self.grid_rowconfigure(2, weight=1, minsize=300)
+        self.grid_columnconfigure(0, weight=1)
 
         # --- Frame Principal de la Tabla (Fila 0) ---
         self.frame_top = tk.Frame(self, bg='#CFD8DC')
-        self.frame_top.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.frame_top.grid(row=0, column=0, sticky="nsew", padx=5, pady=(5,1))
+
+        self.frame_middle = tk.Frame(self) # Frame invisible contenedor
+        self.frame_middle.grid(row=1, column=0, sticky="nsew", padx=5, pady=1)
+        self.frame_middle.grid_columnconfigure(0, weight=3) 
+        self.frame_middle.grid_columnconfigure(1, weight=2)
+        self.frame_middle.grid_rowconfigure(0, weight=1)
         
-        self.frame_top.grid_columnconfigure(0, weight=0) # Fija el ancho del panel de info
-        self.frame_top.grid_columnconfigure(1, weight=1) # Permite que la tabla ocupe el resto
+        # Dentro de frame_top la columna 0 es el panel de info y la 1 la tabla (expandible)
+        self.frame_top.grid_columnconfigure(0, weight=0, minsize=160) # panel información ancho fijo
+        self.frame_top.grid_columnconfigure(1, weight=1) # tabla ocupa el resto
         self.frame_top.grid_rowconfigure(0, weight=1) 
         
         # Tooltip para info de elemento (Columna 0)
         self.frame_info = tk.Label(self.frame_top, text="Clic en un elemento\npara ver detalles.", 
                                  bg='#EFEFEF', bd=1, relief=tk.SOLID, justify=tk.LEFT,
-                                 font=('Helvetica', 10), anchor='nw', width=25, height=4, 
-                                 padx=5, pady=5)
+                                 font=('Helvetica', 10), anchor='nw', width=28, height=8, 
+                                 padx=8, pady=8)
         self.frame_info.grid(row=0, column=0, sticky="nsw", padx=10, pady=10)
 
         # --- Tabla Periódica --- (Columna 1)
-        self.tabla_periodica = TablaPeriodica(self.frame_top, self.mostrar_info_elemento)
+        self.tabla_periodica = TablaPeriodica(self.frame_top, click_callback=self.evento_click_elemento, hover_callback=self.actualizar_panel_info)
+        self.tabla_periodica.grid(row=0, column=1, sticky="nsew", padx=6, pady=6) 
 
+        # --- Frame de Entrada de Ecuación (Fila 1) CustomTKinter---
+        self.frame_input = ctk.CTkFrame(
+            master=self.frame_middle,
+            fg_color='#B0BEC5',    # Reemplaza a 'bg'. Es el color de fondo del frame.
+            corner_radius=20,      # <--- ¡LA MAGIA! Bordes redondeados. # Opcional: color del borde un poco más oscuro.
+            )
 
-        self.tabla_periodica.grid(row=0, column=1, sticky="nsew", padx=10, pady=10) 
+# La colocación (grid) funciona casi igual, pero se ve mejor
+        self.frame_input.grid(
+            row=0, 
+            column=0, 
+            sticky="nsew", # "ew" hace que se estire de Este a Oeste (ancho completo)
+            padx=(0, 5),     # Margen externo (separación de los bordes de la ventana)
+            pady=0      # Margen vertical
+            )
 
-        # --- NUEVO FRAME PARA ESTRUCTURA DE LEWIS (Fila 1) ---
-        self.frame_lewis = tk.Frame(self, bg='#DDE3E8', padx=10, pady=10)
-        self.frame_lewis.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
-
-        # Configuración de columnas y filas internas
-        self.frame_lewis.grid_columnconfigure(0, weight=1)
-        self.frame_lewis.grid_columnconfigure(1, weight=1)
-        self.frame_lewis.grid_rowconfigure(0, weight=1)
-
-        # --- Título del panel de Lewis ---
-        self.label_lewis_title = tk.Label(
-            self.frame_lewis,
-            text="Estructura de Lewis (2D) y Modelo (3D)",
-            font=('Helvetica', 14, 'bold'),
-            bg='#DDE3E8'
-        )
-        self.label_lewis_title.grid(row=0, column=0, columnspan=2, pady=5)
-
-        # --- Canvas 2D de Lewis ---
-        self.canvas_2d = tk.Canvas(
-            self.frame_lewis,
-            width=400,
-            height=300,
-            bg="white",
-            highlightthickness=1,
-            highlightbackground="#AAAAAA"
-        )
-        self.canvas_2d.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
-
-        # --- Frame donde irá el modelo 3D (PyVista) ---
-        self.frame_3d = tk.Frame(self.frame_lewis, bg="black", width=400, height=300)
-        self.frame_3d.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
-
-        # --- Frame de Entrada de Ecuación (Fila 2) ---
-        self.frame_input = tk.Frame(self, bg='#B0BEC5', padx=10, pady=10)
-        self.frame_input.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
+# Esto se mantiene igual (es para centrar o expandir elementos dentro)
         self.frame_input.grid_columnconfigure(0, weight=1)
         
-        tk.Label(self.frame_input, text="Ecuación Química", font=('Helvetica', 14, 'bold'), bg='#B0BEC5').grid(row=0, column=0, columnspan=10, pady=5)
+        lbl_EcuacionQ=ctk.CTkLabel(
+            master=self.frame_input,
+            corner_radius=20,
+            text="Ecuación Química",
+            text_color="#000000",
+            font=("Roboto Bold",24)
+        )
+        lbl_EcuacionQ.grid(row=0, column=0, columnspan=10, pady=2)
+
+# Recuerden gente, todo eso de arriba solo con Custom TKinter --Sgt.Aldea---
 
         # Campo de entrada de la ecuación
         self.ecuacion_var = tk.StringVar(value="") 
-        self.entry_ecuacion = tk.Entry(self.frame_input, textvariable=self.ecuacion_var, font=('Helvetica', 12), width=50, bd=2, relief=tk.SUNKEN)
+        self.entry_ecuacion = tk.Entry(self.frame_input, textvariable=self.ecuacion_var, font=('Helvetica', 12), width=35, bd=2, relief=tk.SUNKEN)
         self.entry_ecuacion.grid(row=1, column=0, columnspan=10, padx=5, pady=5, sticky="ew")
         
         # Frame para el constructor de la ecuación
         self.frame_constructor = tk.Frame(self.frame_input, bg='#B0BEC5')
-        self.frame_constructor.grid(row=2, column=0, columnspan=10, pady=5)
+        self.frame_constructor.grid(row=2, column=0, columnspan=10, pady=5, sticky="ew")
+        self.frame_constructor.grid_columnconfigure((0,1,2,3,4), weight=1)
         
-        
-        tk.Label(self.frame_constructor, text="Molécula:", font=('Helvetica', 11), bg='#B0BEC5').pack(side=tk.LEFT, padx=(0, 5))
-        
+        lbl_mol = tk.Label(self.frame_constructor, text="Molécula:", font=('Helvetica', 11), bg='#B0BEC5')
+        lbl_mol.grid(row=0, column=0, padx=5, pady=5, sticky="e")
         self.molecula_var = tk.StringVar(value="") 
-        self.entry_molecula = tk.Entry(self.frame_constructor, textvariable=self.molecula_var, font=('Helvetica', 11), width=15, bd=1)
-        self.entry_molecula.pack(side=tk.LEFT, padx=5)
-
-        # --- AÑADIR RASTREO (TRACE) AL CAMPO DE LA MOLÉCULA ---
-        # Cada vez que la variable cambie ('w'), llama a convertir_a_subindices
         self.molecula_var.trace_add('write', self.convertir_a_subindices)
+        self.entry_molecula = tk.Entry(self.frame_constructor, textvariable=self.molecula_var, font=('Helvetica', 11), width=12, bd=1)
+        self.entry_molecula.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
         
-        # --- BOTONES DE OPERACIÓN ---
-        tk.Button(self.frame_constructor, text="Agregar (+)", bg="#4CAF50", fg="white", font=('Helvetica', 10, 'bold'), command=self.agregar_molecula).pack(side=tk.LEFT, padx=5)
-        tk.Button(self.frame_constructor, text="Flecha (→)", bg="#FFC107", fg="black", font=('Helvetica', 10, 'bold'), command=self.agregar_flecha).pack(side=tk.LEFT, padx=5)
-        tk.Button(self.frame_constructor, text="Limpiar", bg="#F44336", fg="white", font=('Helvetica', 10, 'bold'), command=self.limpiar_ecuacion).pack(side=tk.LEFT, padx=5)
-        tk.Button(self.frame_constructor, text="BALANCEAR", bg="#2196F3", fg="white", font=('Helvetica', 10, 'bold'), command=self.balancear_ecuacion).pack(side=tk.LEFT, padx=10)
-        tk.Button(self.frame_constructor, text="Mostrar Lewis", bg="#9C27B0", fg="white", command=self.mostrar_lewis_actual).pack(side=tk.LEFT, padx=5)
+        # --- BOTONES DE OPERACIÓN | Los cambie de Tkinter a CustomTkinter --Sgt.Aldea---
+        btn_agregar = ctk.CTkButton(
+            master=self.frame_constructor, text="Agregar (+)",
+            fg_color="#1E88E5", hover_color="#1565C0",
+            corner_radius=15, height=30, width=100, # Un poco más compactos
+            command=self.agregar_molecula
+        )
+        btn_agregar.grid(row=0, column=2, padx=5, pady=5)
 
+        btn_flecha = ctk.CTkButton(
+            master=self.frame_constructor, text="Flecha (→)",
+            fg_color="#FFC107", hover_color="#C09000",
+            corner_radius=15, height=30, width=100,
+            command=self.agregar_flecha
+        )
+        btn_flecha.grid(row=0, column=3, padx=5, pady=5)
 
-        # --- Frame de Resultado (Fila 3) ---
-        self.frame_bottom = tk.Frame(self, bg='#ECEFF1', padx=10, pady=10)
-        self.frame_bottom.grid(row=3, column=0, sticky="nsew", padx=5, pady=5)
+        btn_limpiar = ctk.CTkButton(
+            master=self.frame_constructor, text="Limpiar",
+            fg_color="#E34234", hover_color="#BE3A2E",
+            corner_radius=15, height=32, width=110,
+            command=self.limpiar_ecuacion
+        )
+        btn_limpiar.grid(row=1, column=1, padx=5, pady=(2,5))
+        
+        btn_balancear = ctk.CTkButton(
+            master=self.frame_constructor, text="Balancear",
+            fg_color="#00A86B", hover_color="#027E50",
+            corner_radius=15, height=32, width=110, font=("Roboto", 13, "bold"),
+            command=self.balancear_ecuacion
+        )
+        btn_balancear.grid(row=1, column=2, padx=5, pady=(2,5))
+        btn_lewis = ctk.CTkButton(
+            master=self.frame_constructor, text="Ver Lewis", # Texto más corto
+            fg_color="#9C27B0", hover_color="#751E85",
+            corner_radius=15, height=32, width=110,
+            command=self.mostrar_lewis_actual
+        )
+        btn_lewis.grid(row=1, column=3, padx=5, pady=(2,5))
+
+        # --- Frame de Resultado (Fila 2) ---
+        self.frame_bottom = tk.Frame(self.frame_middle, bg='#ECEFF1', padx=10, pady=10)
+        self.frame_bottom.grid(row=0, column=1, sticky="nsew", padx=(5, 0), pady=0)
         self.frame_bottom.grid_columnconfigure(0, weight=1)
         self.frame_bottom.grid_rowconfigure(1, weight=1)
 
         tk.Label(self.frame_bottom, text="Procedimiento y Resultado", font=('Helvetica', 14, 'bold'), bg='#ECEFF1').grid(row=0, column=0, sticky="w", pady=(0, 5))
         
-        self.output_text = scrolledtext.ScrolledText(self.frame_bottom, wrap=tk.WORD, height=15, font=('Consolas', 11), bd=2, relief=tk.SUNKEN)
+        self.output_text = scrolledtext.ScrolledText(self.frame_bottom, wrap=tk.WORD, height=6, font=('Consolas', 11), bd=2, relief=tk.SUNKEN)
         self.output_text.grid(row=1, column=0, sticky="nsew")
+
+        # --- NUEVO FRAME PARA ESTRUCTURA DE LEWIS (Fila 3, al final) ---
+        self.frame_lewis = tk.Frame(self, bg='#DDE3E8', padx=5, pady=5)
+        self.frame_lewis.grid(row=2, column=0, sticky="nsew", padx=5, pady=(1,5))
+
+        # Configuración de columnas y filas internas (más espacio para 3D)
+        self.frame_lewis.grid_columnconfigure(0, weight=1)
+        self.frame_lewis.grid_columnconfigure(1, weight=2)
+        self.frame_lewis.grid_rowconfigure(0, weight=0, minsize=30) 
+        # Fila 1: Contenido (peso 1 = ocupa todo el resto del espacio)
+        self.frame_lewis.grid_rowconfigure(1, weight=1)
+
+        # --- Título del panel de Lewis ---
+        self.label_lewis_title = tk.Label(
+            self.frame_lewis,
+            text="Estructura de Lewis (2D) y Modelo (3D)",
+            font=('Helvetica', 12, 'bold'),
+            bg='#DDE3E8'
+        )
+        self.label_lewis_title.grid(row=0, column=0, columnspan=2, pady=(2,5), sticky="n")
+
+        # --- Canvas 2D de Lewis (expandible) ---
+        self.canvas_2d = tk.Canvas(
+            self.frame_lewis,
+            bg="white",
+            highlightthickness=1,
+            highlightbackground="#AAAAAA"
+        )
+        self.canvas_2d.grid(row=1, column=0, sticky="nsew", padx=5, pady=0)
+
+        # --- Frame donde irá el modelo 3D (VTK) ---
+        self.frame_3d = tk.Frame(self.frame_lewis, bg="black")
+        self.frame_3d.grid(row=1, column=1, sticky="nsew", padx=2, pady=0)
 
     # --- Generador simple de geometría a partir de fórmula (heurístico) ---
     def formula_a_atoms_bonds(self, formula_norm):
@@ -188,17 +247,126 @@ class Interfaz(tk.Tk):
 
     # --- Dibujar en Canvas 2D ---
     def dibujar_2d_en_canvas(self, atoms_2d, bonds):
+        """
+        Dibuja la estructura en canvas escalada y con aspecto más profesional:
+        - centra y escala automáticamente
+        - dibuja sombras / bordes de los átomos
+        - dibuja líneas paralelas para dobles/triples enlaces
+        - etiqueta cada átomo con símbolo y (si está disponible) número atómico pequeño
+        """
         self.canvas_2d.delete("all")
-        # Dibujar enlaces
-        for i,j,order in bonds:
-            a = atoms_2d[i]; b = atoms_2d[j]
-            self.canvas_2d.create_line(a['x'], a['y'], b['x'], b['y'], width=2*order)
-        # Dibujar átomos (círculos + texto)
+        self.canvas_2d.update_idletasks()
+        canvas_w = max(220, self.canvas_2d.winfo_width())
+        canvas_h = max(140, self.canvas_2d.winfo_height())
+        padding = 18
+
+        if not atoms_2d:
+            return
+
+        # bounding box del contenido original
+        xs = [a['x'] for a in atoms_2d]
+        ys = [a['y'] for a in atoms_2d]
+        minx, maxx = min(xs), max(xs)
+        miny, maxy = min(ys), max(ys)
+        content_w = maxx - minx if maxx > minx else 1.0
+        content_h = maxy - miny if maxy > miny else 1.0
+
+        # escala para ajustar al canvas — limitamos el zoom máximo para mantener proporciones
+        scale_x = (canvas_w - 2 * padding) / content_w
+        scale_y = (canvas_h - 2 * padding) / content_h
+        scale = min(scale_x, scale_y, 1.4)
+
+        # origen y centro
+        cx_orig = (minx + maxx) / 2.0
+        cy_orig = (miny + maxy) / 2.0
+        cx_canvas = canvas_w / 2.0
+        cy_canvas = canvas_h / 2.0
+
+        # transformar coordenadas
+        atoms_t = []
         for a in atoms_2d:
+            tx = cx_canvas + (a['x'] - cx_orig) * scale
+            ty = cy_canvas + (a['y'] - cy_orig) * scale
+            atoms_t.append({'elem': a['elem'], 'x': tx, 'y': ty})
+
+        # Mapa de colores para átomos (mejor apariencia)
+        atom_color = {
+            "H": "#FFFFFF", "C": "#333333", "O": "#FF3B30", "N": "#007AFF",
+            "S": "#FFD60A", "Cl": "#00C853", "F": "#00C853", "P": "#FF9500"
+        }
+
+        # Función para dibujar enlaces considerandos orden (1,2,3)
+        import math
+        def draw_bond(p1, p2, order):
+            x1, y1 = p1; x2, y2 = p2
+            dx, dy = x2 - x1, y2 - y1
+            length = math.hypot(dx, dy)
+            if length == 0:
+                return
+            ux, uy = dx / length, dy / length
+            # perpendicular
+            px, py = -uy, ux
+            # offsets para enlaces múltiples
+            offset = max(3, 6 * (scale/1.2))
+            if order == 1:
+                self.canvas_2d.create_line(x1, y1, x2, y2, width=max(1, int(2*scale)), capstyle=tk.ROUND)
+            else:
+                # dibuja líneas paralelas centradas
+                offs = offset * (order - 1)
+                # para doble: -offset/2, +offset/2 ; triple: -offset, 0, +offset
+                steps = []
+                if order == 2:
+                    steps = [-offset/2, offset/2]
+                elif order == 3:
+                    steps = [-offset, 0, offset]
+                for s in steps:
+                    sx1 = x1 + px * s; sy1 = y1 + py * s
+                    sx2 = x2 + px * s; sy2 = y2 + py * s
+                    self.canvas_2d.create_line(sx1, sy1, sx2, sy2, width=max(1, int(1.6*scale)), capstyle=tk.ROUND)
+
+        # Dibujar enlaces primero (para que queden debajo)
+        for i, j, order in bonds:
+            if i < 0 or j < 0 or i >= len(atoms_t) or j >= len(atoms_t):
+                continue
+            a = atoms_t[i]; b = atoms_t[j]
+            draw_bond((a['x'], a['y']), (b['x'], b['y']), order)
+
+        # Dibujar átomos: sombra, borde, interior, etiqueta y número atómico pequeño
+        for idx, a in enumerate(atoms_t):
             x = a['x']; y = a['y']
-            r = 18
-            self.canvas_2d.create_oval(x-r, y-r, x+r, y+r, fill="#F8F8F8", outline="black")
-            self.canvas_2d.create_text(x, y+2, text=a['elem'], font=("Helvetica", 12, "bold"))
+            elem = a['elem']
+            # radio relativo
+            base_r = max(8, 14 * scale)
+            # sombra (dibujar varios óvalos ligeramente más grandes para efecto sutil)
+            try:
+                # sombra: óvalo gris muy tenue
+                self.canvas_2d.create_oval(x-base_r-2, y-base_r-2, x+base_r+2, y+base_r+2, fill="#E6E6E6", outline="")
+            except Exception:
+                pass
+
+            fill = atom_color.get(elem, "#B0BEC5")
+            # círculo principal (blanco para H para mayor identificación)
+            if elem == "H":
+                fill = atom_color.get("H", "#FFFFFF")
+            self.canvas_2d.create_oval(x-base_r, y-base_r, x+base_r, y+base_r, fill=fill, outline="#222222", width=max(1, int(1.5*scale)))
+
+            # Texto del símbolo centrado
+            font_size = max(9, int(12 * scale))
+            self.canvas_2d.create_text(x, y-1, text=elem, font=("Helvetica", font_size, "bold"))
+
+            # Número atómico pequeño debajo si está disponible en self.df_elementos
+            try:
+                if hasattr(self, "df_elementos") and self.df_elementos is not None:
+                    df = self.df_elementos
+                    row = df[df["Simbolo"] == elem]
+                    if not row.empty:
+                        z = int(row["NumeroAtomico"].values[0])
+                        self.canvas_2d.create_text(x, y + base_r - 6, text=str(z), font=("Helvetica", max(6, int(8*scale))), fill="#333333")
+            except Exception:
+                pass
+
+        # Dibujar borde decorativo alrededor del canvas (opcional estético)
+        self.canvas_2d.create_rectangle(2, 2, canvas_w-2, canvas_h-2, outline="#CCCCCC")
 
     # --- INICIALIZAR VTK EN self.frame_3d ---
     def init_vtk_3d(self):
@@ -227,6 +395,7 @@ class Interfaz(tk.Tk):
         self.vtk_widget.Start()
 
         self._vtk_actors = []
+        
 
     # --- Limpiar escena VTK ---
     def clear_vtk_scene(self):
@@ -299,22 +468,223 @@ class Interfaz(tk.Tk):
 
         self.vtk_widget.GetRenderWindow().Render()
 
+    def _validar_molecula_sin_coeficiente(self, molecula_normal: str) -> bool:
+        """
+        Devuelve True si la molécula NO tiene coeficiente al inicio.
+        Ej: "CH4" -> True, "2CH4" -> False
+        """
+        if not molecula_normal:
+            return False
+        if re.match(r'^\d+', molecula_normal):
+            return False
+        return True
+        
+    def calcular_propiedades_molecula(self, formula_norm, atoms_2d, atoms_3d, bonds):
+        """
+        Genera un texto breve (apto para estudiantes de enseñanza media)
+        con las características principales de la molécula.
+        - formula_norm: cadena normal (ej. CH4)
+        - atoms_2d: lista de dicts {'elem': 'C', 'x':..., 'y':...}
+        - atoms_3d: lista de dicts {'elem': 'C', 'pos':(...)}
+        - bonds: lista de tuplas (i, j, order)
+        """
+        from collections import Counter
+        import numpy as _np
+
+        # Mapa simple de electrones de valencia (fallback)
+        VALENCE = {
+            "H": 1, "He": 2,
+            "Li": 1, "Be": 2, "B": 3, "C": 4, "N": 5, "O": 6, "F": 7, "Ne": 8,
+            "P": 5, "S": 6, "Cl": 7, "Br": 7, "I": 7
+        }
+
+        # Conteos y resumen de tipos de enlace
+        bond_orders = [int(order) if order is not None else 1 for (_, _, order) in bonds]
+        total_bonds = len(bonds)
+        singles = sum(1 for o in bond_orders if o == 1)
+        doubles = sum(1 for o in bond_orders if o == 2)
+        triples = sum(1 for o in bond_orders if o >= 3)
+        total_pairs_in_bonds = sum(bond_orders)  # cada 'order' representa pares (1 = 1 par = 2 e-)
+
+        lines = []
+        lines.append(f"Fórmula: {formula_norm}")
+        lines.append("")  # separador breve
+
+        # --- Tipo y número de enlaces (breve) ---
+        lines.append("Tipo y número de enlaces:")
+        if total_bonds == 0:
+            lines.append("  - No se detectaron enlaces.")
+        else:
+            types = []
+            if singles:
+                types.append(f"{singles} simple(s)")
+            if doubles:
+                types.append(f"{doubles} doble(s)")
+            if triples:
+                types.append(f"{triples} triple(s)")
+            types_str = ", ".join(types)
+            # Ejemplo didáctico corto
+            example = ""
+            if "C" in [a["elem"] for a in atoms_2d] and "O" in [a["elem"] for a in atoms_2d] and doubles:
+                example = " Ej.: en CO₂ hay dos enlaces dobles."
+            lines.append(f"  - {types_str}.{example}")
+            lines.append(f"  - Enlaces totales: {total_bonds}")
+            lines.append(f"  - Pares de electrones compartidos en enlaces: {total_pairs_in_bonds} (cada par = 2 e-)")
+        lines.append("")
+
+        # --- Electrones de valencia y pares enlazantes/solitarios (estimados) ---
+        lines.append("Configuración y valencia (resumen por átomo):")
+        elems = [a["elem"] for a in atoms_2d]
+        counts = Counter(elems)
+
+        # Construir grado (número de enlaces por átomo, considerando orden)
+        degs = [0] * len(atoms_2d)
+        for i, j, order in bonds:
+            o = int(order) if order is not None else 1
+            degs[i] += o
+            degs[j] += o
+
+        # Para cada átomo, calculamos una estimación sencilla:
+        # - valence = VALENCE lookup (si no existe, se intenta con df_elementos)
+        # - electrons_in_bonds = degs[idx] * 2 (pares->electrones alrededor por enlaces)
+        # - lone_electrons_est = valence - degs[idx]  (si positivo) *esto estima pares no enlazantes en electrones
+        # Nota pedagógica: esta es una estimación simple para explicar el concepto al estudiante.
+        for idx, a in enumerate(atoms_2d):
+            sym = a.get("elem", "?")
+            val = VALENCE.get(sym, None)
+            if val is None:
+                # intentar sacar masa/número desde self.df_elementos si existe (no perfecto pero ayuda)
+                try:
+                    if hasattr(self, "df_elementos") and self.df_elementos is not None:
+                        row = self.df_elementos[self.df_elementos["Simbolo"] == sym]
+                        if not row.empty and "NumeroAtomico" in row.columns:
+                            # aproximamos valencia por grupo (heurística): usar (NumeroAtomico % 8) como fallback
+                            z = int(row["NumeroAtomico"].values[0])
+                            val = z % 8
+                            if val == 0:
+                                val = 8
+                        else:
+                            val = 0
+                    else:
+                        val = 0
+                except Exception:
+                    val = 0
+
+            bonds_count = degs[idx]
+            # electrons used in bonds around atom (en pares -> *2 para electrons)
+            electrons_around_from_bonds = bonds_count * 2
+            # Estimamos electrones no enlazantes en electrones:
+            lone_elec = val - bonds_count
+            if lone_elec < 0:
+                lone_elec = 0
+            # convertir a pares de electrones no enlazantes
+            lone_pairs = lone_elec // 2 if lone_elec >= 2 else (1 if lone_elec == 1 else 0)
+            # Electrones totales alrededor (estimación Lewis): (bonds*2) + (lone_pairs*2)
+            electrons_around = electrons_around_from_bonds + (lone_pairs * 2)
+
+            # Regla sencilla de estabilidad: H -> 2, resto -> 8
+            target = 2 if sym == "H" else 8
+            meets = "Sí" if electrons_around == target else "No (estimado)"
+
+            # Texto compacto y didáctico
+            lines.append(f"  - {sym}: valencia ≈ {val}e-, enlaces ≈ {bonds_count}, pares solitarios ≈ {lone_pairs}. Cumple regla ({target}): {meets}")
+
+        lines.append("")
+
+        # Notas finales cortas y amigables
+        lines.append("")
+        lines.append("Notas (para estudiantes):")
+        lines.append("  - Cada línea = 1 par de electrones (2 e-). Doble = 2 pares, triple = 3 pares.")
+        lines.append("  - La regla del octeto significa tener ~8 electrones alrededor (H solo 2).")
+        lines.append("  - Esta es una explicación simplificada para aprender la idea; estructuras reales pueden tener excepciones.")
+
+        # Unir y retornar (texto corto, con saltos)
+        return "\n".join(lines)
+
+    
+
     # --- Botón / función que conecta todo: obtiene la molécula del entry y dibuja ---
     def mostrar_lewis_actual(self):
+        """
+        Obtiene la molécula del campo, dibuja 2D y 3D y escribe propiedades en el panel de salida.
+        Esta versión es más robusta: captura errores parciales (p. ej. VTK no disponible)
+        y se asegura de que el texto se inserte y sea visible.
+        """
         mol_unicode = self.molecula_var.get().strip()
         mol_norm = mol_unicode.translate(SUB_TO_NORMAL)
+
         if not mol_norm:
-            messagebox.showinfo("Info", "Escribe una molécula en el campo 'Molécula' (ej: H2O) y pulsa Mostrar Lewis.")
+            messagebox.showinfo("Info", "Escribe una molécula en el campo 'Molécula' (ej: CH4) y pulsa Ver Lewis.")
             return
 
-        atoms_2d, atoms_3d, bonds = self.formula_a_atoms_bonds(mol_norm)
-        self.dibujar_2d_en_canvas(atoms_2d, bonds)
+        # Validación: evitar coeficientes en el campo 'Molécula' (ej: "2CH4")
+        if not self._validar_molecula_sin_coeficiente(mol_norm):
+            messagebox.showwarning(
+                "Formato inválido",
+                "Por favor ingresa una molécula estable en el campo 'Molécula' (ej: CH4). "
+                "No escribas coeficientes al inicio (por ejemplo: 2CH4)."
+            )
+            return
 
-        if not hasattr(self, 'vtk_widget'):
-            self.init_vtk_3d()
+        # Generar geometría (puede lanzar si formula no parsea bien)
+        try:
+            atoms_2d, atoms_3d, bonds = self.formula_a_atoms_bonds(mol_norm)
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo generar la geometría para '{mol_norm}': {e}")
+            return
 
-        self.render_molecule_3d(atoms_3d, bonds)
-        self.output_text.insert(tk.END, f"Mostrar Lewis: {mol_norm} | átomos: {len(atoms_2d)} | enlaces: {len(bonds)}\n")
+        # Dibujar 2D (esto ya lo tienes)
+        try:
+            self.dibujar_2d_en_canvas(atoms_2d, bonds)
+        except Exception as e:
+            # No queremos que un fallo visual impida mostrar las propiedades
+            print(f"[DEBUG] Error al dibujar 2D: {e}")
+
+        # Intentar inicializar VTK y renderizar 3D, pero no bloquear si falla
+        try:
+            if not hasattr(self, 'vtk_widget'):
+                self.init_vtk_3d()
+            # Si init falló, init_vtk_3d muestra un messagebox y sale; comprobamos vtk_widget
+            if hasattr(self, 'vtk_widget'):
+                try:
+                    self.render_molecule_3d(atoms_3d, bonds)
+                except Exception as e:
+                    print(f"[DEBUG] Error al renderizar 3D: {e}")
+        except Exception as e:
+            # Capturamos cualquier otro fallo de VTK sin interrumpir la UI
+            print(f"[DEBUG] Excepción al manejar VTK: {e}")
+
+        # Asegurarnos de que el widget de salida esté en modo normal (editable) para insertar texto
+        try:
+            self.output_text.configure(state='normal')
+        except Exception:
+            pass
+
+        # Calcular propiedades y escribir en el panel de resultado
+        try:
+            props = self.calcular_propiedades_molecula(mol_norm, atoms_2d, atoms_3d, bonds)
+            # Opcional: limpiar el output anterior o no — aquí añadimos al final.
+            self.output_text.insert(tk.END, "=== Propiedades de la molécula ===\n")
+            self.output_text.insert(tk.END, props + "\n")
+            self.output_text.insert(tk.END, "=== Fin propiedades ===\n\n")
+            # Mover el scroll al final para que el usuario lo vea
+            self.output_text.see(tk.END)
+        except Exception as e:
+            # Si el cálculo de propiedades falla, insertamos la mínima info útil
+            try:
+                self.output_text.insert(tk.END, f"Mostrar Lewis: {mol_norm} | átomos: {len(atoms_2d)} | enlaces: {len(bonds)}\n")
+                self.output_text.insert(tk.END, f"(Error al calcular propiedades: {e})\n")
+                self.output_text.see(tk.END)
+            except Exception:
+                # Si falla hasta aquí, al menos no dejamos que la app se cierre
+                print(f"[DEBUG] Error al insertar texto en output_text: {e}")
+
+        # Opcional: dejar el output_text en modo normal (permitir copia), pero si quieres bloquearlo:
+        try:
+            # self.output_text.configure(state='disabled')  # descomenta si quieres que sea sólo lectura
+            pass
+        except Exception:
+            pass
 
     
     def convertir_a_subindices(self, *args):
@@ -370,14 +740,13 @@ class Interfaz(tk.Tk):
             self.molecula_var.trace_add('write', self.convertir_a_subindices)
         
     
-    def mostrar_info_elemento(self, elemento_info: pd.Series):
+    def actualizar_panel_info(self, elemento_info):
         """
         Actualiza el tooltip con la información detallada del elemento
         Y añade el SÍMBOLO al campo de la molécula, manteniendo la lógica de subíndices.
         """
         simbolo = elemento_info['Simbolo']
-        
-        # Actualiza el panel de información (sin cambios)
+    
         nombre = elemento_info['Nombre']
         numero_atomico = elemento_info['NumeroAtomico']
         masa_atomica = elemento_info['MasaAtomica']
@@ -390,20 +759,20 @@ class Interfaz(tk.Tk):
         )
         self.frame_info.config(text=info)
 
-        # LÓGICA: Añadir símbolo al campo de la molécula
+    def evento_click_elemento(self, elemento_info):
+
+        # 1. Actualizamos info
+        self.actualizar_panel_info(elemento_info)
+
+        # 2. Escribimos en el input
+        simbolo = elemento_info['Simbolo']
         current_molecula = self.molecula_var.get()
-        
-        # 1. Revertir subíndices a normales para trabajar (ej. '2H₂O' -> '2H2O')
         current_molecula_normal = current_molecula.translate(SUB_TO_NORMAL)
-        
-        # 2. Agregar el nuevo símbolo
         new_normal = current_molecula_normal + simbolo
         
-        # 3. Usar la lógica de conversión (que ya maneja coeficientes y subíndices)
-        # Esto es lo más simple, ya que el rastreo maneja la compleja lógica de separación
-        # Si cambiamos la variable, el trace se activa y lo corrige.
+        # Usamos la lógica de conversión
         self.molecula_var.set(new_normal.translate(NORMAL_TO_SUB))
-        self.entry_molecula.focus_set() # Poner el foco en el campo de la molécula
+        self.entry_molecula.focus_set()
 
 
     def agregar_molecula(self):
